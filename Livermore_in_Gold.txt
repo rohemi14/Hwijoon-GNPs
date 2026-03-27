@@ -1,0 +1,152 @@
+#========================================
+# Step 2: Ag Core PHSP file as source in Au Shell G4DNA-Au → phsp_AuSurface
+# Aushell radius: 25 nm
+#========================================
+
+# --- Overall control ---
+i:Ts/NumberOfThreads        = 0
+b:Ge/QuitIfOverlapDetected  = "True"
+
+# World Geo
+s:Ge/World/Type     = "TsBox"
+s:Ge/World/Material = "G4_WATER"
+d:Ge/World/HLX      = 0.5 um
+d:Ge/World/HLY      = 0.5 um
+d:Ge/World/HLZ      = 0.5 um
+
+# Material definition
+# s:Ma/AuShellMat/Type     = "Material"
+# s:Ma/AuShellMat/Material = "G4_Au"
+# d:Ma/AuShellMat/Density = 10.49 g/cm3   # Ag density (test)
+
+# Au Shell Geo
+s:Ge/AuShell/Type     = "TsSphere"
+s:Ge/AuShell/Parent   = "World"
+s:Ge/AuShell/Material = "G4_Au"
+d:Ge/AuShell/RMin     = 0 nm # phsp source in inner space, boundary issue 해결
+d:Ge/AuShell/RMax     = 50. nm
+d:Ge/AuShell/DPhi     = 360. deg
+d:Ge/AuShell/TransX   = 0. nm
+d:Ge/AuShell/TransY   = 0. nm
+d:Ge/AuShell/TransZ   = 0. nm
+s:Ge/AuShell/Color    = "White"
+s:Ge/AuShell/DrawingStyle = "FullWireFrame"
+
+
+s:So/I125_Gamma_Core/Type          = "Isotropic"
+s:So/I125_Gamma_Core/Component     = "AuShell"
+sc:So/I125_Gamma_Core/ActiveMaterial = "G4_Au"
+s:So/I125_Gamma_Core/BeamParticle  = "gamma"
+s:So/I125_Gamma_Core/BeamEnergySpectrumType    = "Discrete"
+dv:So/I125_Gamma_Core/BeamEnergySpectrumValues =  7  4.135 27.202 27.473 31.093 31.359 31.698 35.4925 keV
+uv:So/I125_Gamma_Core/BeamEnergySpectrumWeights = 7 0.0796224824 0.2126194364 0.3959393611 0.1133109468 0.1378994243 0.02458847541 0.03601987353
+i:So/I125_Gamma_Core/NumberOfHistoriesInRun = 4860631
+# i:So/I125_Gamma_Core/NumberOfHistoriesInRun = 100 
+
+
+
+s:So/I125_Electron_Core/Type          = "Isotropic"
+s:So/I125_Electron_Core/Component     = "AuShell"
+sc:So/I125_Electron_Core/ActiveMaterial = "G4_Au"
+s:So/I125_Electron_Core/BeamParticle  = "e-"
+s:So/I125_Electron_Core/BeamEnergySpectrumType    = "Discrete"
+dv:So/I125_Electron_Core/BeamEnergySpectrumValues =  5  3.621 22.528 26.663 26.862 30.795 keV
+uv:So/I125_Electron_Core/BeamEnergySpectrumWeights = 5 0.7982932935 0.06704337855 0.03037064962 0.10085335323 0.003439325058
+i:So/I125_Electron_Core/NumberOfHistoriesInRun = 5139369
+# i:So/I125_Electron_Core/NumberOfHistoriesInRun = 100 
+
+
+
+
+# Scoring : AuShellSurface PHSP_2 file
+# AuShell's OuterCurvedSurface particles 
+s:Sc/AuShellSurfacePhsp/Quantity = "PhaseSpace"
+s:Sc/AuShellSurfacePhsp/Surface = "AuShell/OuterCurvedSurface"
+s:Sc/AuShellSurfacePhsp/OutputFile = "I-125_AuShell_Surface"
+s:Sc/AuShellSurfacePhsp/OutputType = "ASCII"
+s:Sc/AuShellSurfacePhsp/OnlyIncludeParticlesGoing = "Out"
+# sv:Sc/AuShellSurfacePhsp/OnlyIncludeParticlesNamed = 1 "e-" #scoring secondary electrons only from AuShell
+#sv:Sc/AuShellSurfacePhsp/OnlyIncludeParticlesFromComponent = 1 "AuShell" #scoring secondary electrons generated only from AuShell
+# s:Sc/AuShellSurfacePhsp/OnlyIncludeParticlesOfGeneration = "Secondary" #scoring secondary electrons only from AuShell
+b:Sc/AuShellSurfacePhsp/IncludeCreatorProcess = "True"
+b:Sc/AuShellSurfacePhsp/IncludeRunID = "True"
+b:Sc/AuShellSurfacePhsp/IncludeEventID = "True"
+b:Sc/AuShellSurfacePhsp/IncludeTrackId = "True"
+b:Sc/AuShellSurfacePhsp/IncludeSeed = "True"
+s:Sc/AuShellSurfacePhsp/IfOutputFileAlreadyExists = "Overwrite"
+
+s:Sc/DoseAtAuShell/Quantity = "DoseToMedium"
+s:Sc/DoseAtAuShell/Component = "AuShell"
+sv:Sc/DoseAtAuShell/Report = 3 "Sum" "Mean" "Standard_Deviation"
+s:Sc/DoseAtAuShell/IfOutputFileAlreadyExists = "Overwrite"
+
+b:Ge/ListMaterials = "True"
+# Physics : DNA-Au
+# Active the physics in region
+s:Ge/AuShell/AssignToRegionNamed = "AgCoating"
+
+sv:Ph/Default/Modules = 1 "g4em-livermore"
+b:Ph/ListProcesses = "True"
+d:Ph/Default/EMRangeMin = 100. eV 
+d:Ph/Default/LowestElectronEnergy = 100 eV  # no 100 eV cut for core
+d:Ph/Default/SetProductionCutLowerEdge = 100 eV
+b:Ph/Default/Fluorescence = "True"
+b:Ph/Default/Auger = "True"
+b:Ph/Default/PIXE = "True"
+b:Ph/Default/AugerCascade = "True"
+b:Ph/Default/DeexcitationIgnoreCut = "True"
+d:Ph/Default/CutForAllParticles = 1. nm
+d:Ph/Default/CutForGamma    = 1. nm
+d:Ph/Default/CutForElectron = 1. nm
+d:Ph/Default/CutForPositron = 1. nm
+d:Ph/Default/CutForProton   = 1. nm
+
+
+i:Ge/Verbosity = 1
+i:Ph/Default/Verbosity = 1
+# i:Ts/TrackingVerbosity = 3 # Set to larger integer to see details of tracking
+b:Ts/ShowHistoryCountLessFrequentlyAsSimulationProgresses = "True"
+i:Ts/ShowHistoryCountAtInterval = 10000
+i:Ts/MaxShowHistoryCountInterval = 1000000
+
+# ----- Gamma spectrum at AuCore surface -----
+s:Sc/GammaAtAuShell/Quantity = "SurfaceTrackCount"
+s:Sc/GammaAtAuShell/Surface  = "AuShell/OuterCurvedSurface"
+s:Sc/GammaAtAuShell/OnlyIncludeParticlesGoing = "Out"
+sv:Sc/GammaAtAuShell/OnlyIncludeParticlesNamed = 1 "gamma"
+
+i:Sc/GammaAtAuShell/EBins   = 400
+d:Sc/GammaAtAuShell/EBinMin = 0 keV
+d:Sc/GammaAtAuShell/EBinMax = 40 keV
+s:Sc/GammaAtAuShell/EBinEnergy = "PreStep"
+
+s:Sc/GammaAtAuShell/OutputType = "csv"
+s:Sc/GammaAtAuShell/OutputFile = "Spec_Gamma_AtAuShell"
+s:Sc/GammaAtAuShell/IfOutputFileAlreadyExists = "Overwrite"
+
+# ----- Electron spectrum at AuCore surface -----
+s:Sc/ElectronAtAuShell/Quantity = "SurfaceTrackCount"
+s:Sc/ElectronAtAuShell/Surface  = "AuShell/OuterCurvedSurface"
+s:Sc/ElectronAtAuShell/OnlyIncludeParticlesGoing = "Out"
+sv:Sc/ElectronAtAuShell/OnlyIncludeParticlesNamed = 1 "e-"
+
+i:Sc/ElectronAtAuShell/EBins   = 400
+d:Sc/ElectronAtAuShell/EBinMin = 0 keV
+d:Sc/ElectronAtAuShell/EBinMax = 40 keV
+s:Sc/ElectronAtAuShell/EBinEnergy = "PreStep"
+
+s:Sc/ElectronAtAuShell/OutputType = "csv"
+s:Sc/ElectronAtAuShell/OutputFile = "Spec_Electron_AtAuShell"
+s:Sc/ElectronAtAuShell/IfOutputFileAlreadyExists = "Overwrite"
+
+# s:Gr/ViewA/Type = "OpenGl"
+# i:Gr/ViewA/WindowSizeX = 1024
+# i:Gr/ViewA/WindowSizeY = 768
+# u:Gr/ViewA/Zoom = 2.
+# b:Gr/ViewA/IncludeAxes = "False"
+# s:Gr/ViewA/AxesComponent = "World"
+# d:Gr/ViewA/AxesSize =100 nm
+# Ts/UseQt = "True"
+# Ts/PauseBeforeQuit = "True"
+
+
